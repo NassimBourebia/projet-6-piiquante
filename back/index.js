@@ -1,21 +1,13 @@
+require('dotenv').config()
 const express = require('express'); 
 const app = express();
-const port = 3000; 
+const port = 3000;
 
-//database
+//Connection to database
+require("./mongo")
 
-const mongoose = require('mongoose')
-const uri = "mongodb+srv://nassim:nassimAPI@cluster0.qrgc5fo.mongodb.net/?retryWrites=true&w=majority";
-mongoose
-.connect(uri)
-.then((()=> console.log("Connected to mongo")))
-.catch(err => console.error("erro connectiing to mongo", err))
-
-const userSchema = new mongoose.Schema({
-
-    name: String, 
-    password: String
-})
+//Controllers
+const createUser = require("./controllers/user").createUser
 
 
 
@@ -30,12 +22,11 @@ app.use(express.json());
 
 
 //Routes  
-
-
-app.post("/api/auth/signup", (req, res) => {
-    console.log("Signup request:", req.body)
-    res.send({message : "utilisateur enregistré" })
-})
+app.post("/api/auth/signup", createUser)
 app.get('/', (req, res) => res.send("hello wolrd"))
+
+
+//Listen
 app.listen(port, () => console.log("Listening on port" + port)); 
+
 
