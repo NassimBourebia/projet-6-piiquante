@@ -1,4 +1,20 @@
 const jwt = require("jsonwebtoken")
+const mongoose = require("mongoose")
+
+const productSchema = new mongoose.Schema ({
+    userId: String, 
+    name : String ,
+    manufacturer : String ,
+    description : String ,
+    mainPepper : String, 
+    imageUrl : String, 
+    heat : Number ,
+    likes : Number, 
+    dislikes : Number, 
+    usersLiked : [String] ,
+    usersDisliked : [String] 
+})
+const Product = mongoose.model("Product", productSchema)
 
 function getSauces (req, res) {
 
@@ -19,10 +35,30 @@ function handleToken (err, decoded, res) {
     if (err) res.status(403).send({message: "Token invalid" + err})
     else {
         console.log("Good token", decoded)
-        res.send({message: "Voici toutes les sauces"})
+        Product.find({}).then(products => res.send(products))
+        // res.send({message: [{sauce: "sauté1"}, {sauce: "sauté2"}]})
     }
-   
+ }
+
+ function createSauce (req, res) {
+
+    const product = new Product({
+
+        userId: "ng", 
+        name : "ng" ,
+        manufacturer : "ng" ,
+        description : "ng" ,
+        mainPepper : "ng", 
+        imageUrl : "ng", 
+        heat : 1 ,
+        likes : 1, 
+        dislikes : 1, 
+        usersLiked : ["String"] ,
+        usersDisliked : ["String"]
+    })
+    product.save().then((res)=> console.log("product register", res)).catch(console.error)
+
 
  }
 
-module.exports = {getSauces}
+module.exports = {getSauces, createSauce}
