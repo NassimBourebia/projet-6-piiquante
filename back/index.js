@@ -7,9 +7,7 @@ const port = 3000;
 require("./mongo")
 
 //Controllers
-const createUser = require("./controllers/user").createUser
-
-
+const {createUser, logUser} = require("./controllers/user")
 
 //Middleware
 app.use((req, res, next) => {
@@ -17,16 +15,14 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     next();
-  });
-app.use(express.json()); 
+});
 
+app.use(express.json()); 
 
 //Routes  
 app.post("/api/auth/signup", createUser)
-app.get('/', (req, res) => res.send("hello wolrd"))
-
+app.post("/api/auth/login", logUser)
+app.get('/', (req, res) => res.send("hello world"))
 
 //Listen
-app.listen(port, () => console.log("Listening on port" + port)); 
-
-
+app.listen(port, () => console.log("Listening on port " + port)); 
