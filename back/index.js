@@ -8,6 +8,7 @@ require("./mongo")
 
 //Controllers
 const {createUser, logUser} = require("./controllers/user")
+const { getSauces } = require("./controllers/sauces")
 
 //Middleware
 app.use((req, res, next) => {
@@ -22,6 +23,7 @@ app.use(express.json());
 //Routes  
 app.post("/api/auth/signup", createUser)
 app.post("/api/auth/login", logUser)
+app.get("/api/sauces", getSauces)
 app.get('/', (req, res) => res.send("hello world"))
 
 //Listen
