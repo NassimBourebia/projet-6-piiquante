@@ -1,5 +1,8 @@
+//Importe le modèle de l'utilisateur à partir du module ../mongo dans une variable appelée User.
 const User = require("../mongo").User
+//Importe le module bcrypt pour le chiffrement des mots de passe.
 const bcrypt = require("bcrypt")
+//Importe le module jsonwebtoken pour générer des jetons JWT pour l'authentification des utilisateurs.
 const jwt = require('jsonwebtoken')
 
 

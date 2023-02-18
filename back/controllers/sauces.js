@@ -1,6 +1,6 @@
-const jwt = require("jsonwebtoken")
 const mongoose = require("mongoose")
 
+// Schéma de données pour les produits
 const productSchema = new mongoose.Schema ({
     userId: String, 
     name : String ,
@@ -14,49 +14,49 @@ const productSchema = new mongoose.Schema ({
     usersLiked : [String] ,
     usersDisliked : [String] 
 })
+// Modèle de données pour les produits
 const Product = mongoose.model("Product", productSchema)
 
-function getSauces (req, res) {
+// Fonction pour récupérer la liste des sauces
+function getSauces (req, res) { 
 
-     const header = req.header("Authorization")
-     if (header == null) return res.status(403).send({message: "Invalid"})
-
-
-     const token = header.split(" ")[1]
-     if (token == null) return res.status(403).send({message: "Token Invalid"})
-
-
-    jwt.verify(token, process.env.JWT_PASSWORD, (err, decoded) => handleToken(err, decoded, res))
-   
-}
-
-function handleToken (err, decoded, res) { 
-
-    if (err) res.status(403).send({message: "Token invalid" + err})
-    else {
-        console.log("Good token", decoded)
-        Product.find({}).then(products => res.send(products))
-        // res.send({message: [{sauce: "sauté1"}, {sauce: "sauté2"}]})
-    }
+    console.log("le token est validé, get sauces");
+    // console.log("Good token", decoded)
+    Product.find({}).then(products => res.send(products))
+     // res.send({message: [{sauce: "sauté1"}, {sauce: "sauté2"}]})  
  }
 
+ // Fonction pour créer une nouvelle sauce
  function createSauce (req, res) {
 
-    const product = new Product({
+    const {body, file} = req
+    console.log((file));
+    const {fileName} = file     //const fileName = file.fileName
+    const sauce = JSON.parse(body.sauce)
+    const {name, manufacturer, description, mainPepper, heat, userId} = sauce
 
-        userId: "ng", 
-        name : "ng" ,
-        manufacturer : "ng" ,
-        description : "ng" ,
-        mainPepper : "ng", 
-        imageUrl : "ng", 
-        heat : 1 ,
-        likes : 1, 
-        dislikes : 1, 
-        usersLiked : ["String"] ,
-        usersDisliked : ["String"]
+    function makeImageUrl (req, fileName) {
+        return req.protocol + "://" + req.get("host") +  "/images/" + fileName
+    }
+
+    const product = new Product({
+        
+        userId: userId, 
+        name : name ,
+        manufacturer : manufacturer ,
+        description : description ,
+        mainPepper : mainPepper, 
+        imageUrl : makeImageUrl(req, fileName), 
+        heat : heat ,
+        likes : 0,    
+        dislikes : 0, 
+        usersLiked : [] ,
+        usersDisliked : []
     })
-    product.save().then((res)=> console.log("product register", res)).catch(console.error)
+    product
+    .save()
+    .then((res)=> console.log("product register", res))
+    .catch(console.error)
 
 
  }
