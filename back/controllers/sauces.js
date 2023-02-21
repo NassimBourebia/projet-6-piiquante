@@ -1,4 +1,6 @@
+// const { log } = require("console");
 const mongoose = require("mongoose")
+const {unlink} = require("fs/promises")
 
 // Schéma de données pour les produits
 const productSchema = new mongoose.Schema ({
@@ -20,24 +22,95 @@ const Product = mongoose.model("Product", productSchema)
 // Fonction pour récupérer la liste des sauces
 function getSauces (req, res) { 
 
-    console.log("le token est validé, get sauces");
-    // console.log("Good token", decoded)
-    Product.find({}).then(products => res.send(products))
-     // res.send({message: [{sauce: "sauté1"}, {sauce: "sauté2"}]})  
+    Product.find({})
+    .then((products) => res.send(products))
+    .catch((error) => res.status(500).send(error))
+   
  }
 
- // Fonction pour créer une nouvelle sauce
+function getSauceById (req, res) {
+
+    const {id} = req.params
+    Product.findById(id)
+    .then((product) => res.send(product))
+    .catch(console.error)
+
+ }
+
+ function deleteSauce(req, res) {
+  
+    const {id} = req.params
+    Product.findByIdAndDelete(id)
+    .then((product) => sendClientResponse(product, res))
+    .then((item)=> deleteImage(item))
+    .then((res) => console.log("File deleted", res))
+    .catch((err) => res.status(500).send({message: err}))
+
+ }
+
+
+
+ function modifySauce (req, res) { 
+
+    const {
+        params: {id}
+    }= req
+     
+    console.log("req.file", req.file);
+
+    const hasNewImage = req.file != null
+    const payload = makePayload(hasNewImage, req)
+   
+
+    Product.findByIdAndUpdate(id, payload)
+    .then((dbResponse) => sendClientResponse(dbResponse, res))
+    .then((product)=> deleteImage(product))
+    .then((res) => console.log("File deleted", res))
+    .catch((err) => console.error("Probleme updating", err));
+
+ }
+ function deleteImage (product) { 
+    if (product == null) return //Fait rien 
+    console.log("DELETE IMAGE", product);
+    const imageToDelete = product.imageUrl.split("/").at(-1)
+    return unlink("images/" + imageToDelete)
+    
+
+  }
+
+ function makePayload(hasNewImage, req) {
+
+ 
+console.log("hasNewImage:", hasNewImage);
+if (!hasNewImage) return req.body
+const payload = JSON.parse(req.body.sauce)
+payload.imageUrl = makeImageUrl(req, req.file.fileName)
+console.log("New image gestion");
+console.log("Voici le payload", req.body.sauce);
+return payload
+
+ }
+
+ function sendClientResponse(product, res) {
+    if (product == null) {
+        console.log("NOTHING TU UPDATE")
+        return res.status(404).send({message: "Object not found in database"})
+    } 
+        console.log("GOOD UPDATING:", product)
+        return Promise.resolve(res.status(200).send({message : "Successfully updated"}))
+        .then(() => product)
+ }
+    function makeImageUrl (req, fileName) {
+        return req.protocol + "://" + req.get("host") +  "/images/" + fileName
+    }
  function createSauce (req, res) {
 
     const {body, file} = req
-    console.log((file));
     const {fileName} = file     //const fileName = file.fileName
     const sauce = JSON.parse(body.sauce)
     const {name, manufacturer, description, mainPepper, heat, userId} = sauce
 
-    function makeImageUrl (req, fileName) {
-        return req.protocol + "://" + req.get("host") +  "/images/" + fileName
-    }
+
 
     const product = new Product({
         
@@ -55,10 +128,10 @@ function getSauces (req, res) {
     })
     product
     .save()
-    .then((res)=> console.log("product register", res))
-    .catch(console.error)
+    .then((message) => res.status(201).send({message: message}))
+    .catch((err) => res.status(500).send({message: err}))
 
 
  }
 
-module.exports = {getSauces, createSauce}
+module.exports = {getSauces, createSauce, getSauceById, deleteSauce, modifySauce}
