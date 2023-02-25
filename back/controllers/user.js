@@ -1,12 +1,11 @@
 //Importe le modèle de l'utilisateur à partir du module ../mongo dans une variable appelée User.
-const User = require("../mongo").User
-//Importe le module bcrypt pour le chiffrement des mots de passe.
+const {User} = require("../models")
 const bcrypt = require("bcrypt")
 //Importe le module jsonwebtoken pour générer des jetons JWT pour l'authentification des utilisateurs.
 const jwt = require('jsonwebtoken')
 
 
-async function createUser (req, res) {
+exports.createUser = async (req, res) => {
   
     try {
 
@@ -28,7 +27,7 @@ function hashPassword(password){
     return bcrypt.hash(password, saltRounds)
 } 
 
-async function logUser(req, res) {
+exports.logUser = async (req, res) => {
 
     try {
 
@@ -38,7 +37,7 @@ async function logUser(req, res) {
 
     const isPasswordValid = await bcrypt.compare(password, user.password)
     if(!isPasswordValid) {
-        res.status(403).send({message: "Mot de passe incorrect"})
+     return res.status(403).send({message: "Mot de passe incorrect"})
     }
     const token = createToken(email);
     res.status(200).send({userId: user?._id, token: token})
@@ -57,4 +56,3 @@ function createToken (email){
 
 }
 
-module.exports = {createUser, logUser}

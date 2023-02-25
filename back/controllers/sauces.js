@@ -1,46 +1,37 @@
 // const { log } = require("console");
-const mongoose = require("mongoose")
 const {unlink} = require("fs/promises")
-
-// Schéma de données pour les produits
-const productSchema = new mongoose.Schema ({
-    userId: String, 
-    name : String ,
-    manufacturer : String ,
-    description : String ,
-    mainPepper : String, 
-    imageUrl : String, 
-    heat : Number ,
-    likes : Number, 
-    dislikes : Number, 
-    usersLiked : [String] ,
-    usersDisliked : [String] 
-})
-
-const Product = mongoose.model("Product", productSchema)
+const {Product} = require("../models")
 
 
-function getSauces(req, res) { 
+exports.getSauces = async (req, res) => { 
+try {
 
-    Product.find({})
-    .then((products) => res.send(products))
-    .catch((error) => res.status(500).send(error))
+ const products = await Product.find({})
+ res.send(products)
+
+}
+ catch (error) {
+
+ res.status(500).send(error)
+
+}
+
  }
 
- function getSauce (req, res) {  
+function getSauce (req, res) {  
 
 const {id} = req.params
 return Product.findById(id)
  }
 
-function getSauceById (req, res) {
+exports.getSauceById = (req, res) => {
   
     getSauce(req, res)
     .then((product) => sendClientResponse(product,res)) 
     .catch((err)=> res.status(500).send(err))
  }
 
- function deleteSauce(req, res) {
+exports.deleteSauce = (req, res) => {
   
     const {id} = req.params
     Product.findByIdAndDelete(id)
@@ -53,7 +44,7 @@ function getSauceById (req, res) {
 
 
 
- function modifySauce (req, res) { 
+exports.modifySauce = (req, res) => { 
 
     const {
         params: {id}
@@ -111,7 +102,7 @@ return payload
     }
 
 
-function createSauce(req, res) {
+exports.createSauce = (req, res) => {
   const { body, file } = req
   const { fileName } = file
   const sauce = JSON.parse(body.sauce)
@@ -136,7 +127,7 @@ function createSauce(req, res) {
     .catch((err) => res.status(500).send(err))
 }
 
- function likeSauce(req, res) {
+exports.likeSauce = (req, res) => {
  const {like, userId} = req.body
  if (![1,-1,0].includes(like)) return res.status(403).send({message: "Invalid like value"})
 
@@ -192,4 +183,3 @@ function incrementVote(product, userId, like) {
     
     
 
-module.exports = {getSauces, createSauce, getSauceById, deleteSauce, modifySauce, likeSauce}
