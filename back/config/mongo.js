@@ -2,17 +2,15 @@
 
 const mongoose = require('mongoose')
 
-const password = process.env.DB_PASSWORD
-const username = process.env.DB_USERNAME
-const uri = `mongodb+srv://${username}:${password}@cluster0.qrgc5fo.mongodb.net/?retryWrites=true&w=majority`;
-
+// Désactive la vérification stricte des requêtes.
 mongoose.set('strictQuery', false);
 
+// Connecte Mongoose à la base de données MongoDB en utilisant l'URI construit.
 mongoose
-.connect(uri)
+.connect(process.env.MONGO_URI)
 .then(()=> console.log("Connected to mongo"))
 .catch((err) => console.error("Error connecting to mongo :", err))
 
 
-
+// Exporte l'objet mongoose pour permettre à d'autres modules de l'utiliser.
 module.exports = {mongoose}

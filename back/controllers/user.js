@@ -1,18 +1,23 @@
 //Importe le modèle de l'utilisateur à partir du module ../mongo dans une variable appelée User.
-const {User} = require("../models")
-const bcrypt = require("bcrypt")
-//Importe le module jsonwebtoken pour générer des jetons JWT pour l'authentification des utilisateurs.
-const jwt = require('jsonwebtoken')
+const User = require("../models/auth.model")
+const bcrypt = require("../utils/bcrypt")
+const jwt = require("../utils/jwt")
 
 
+
+
+
+// Fonction pour authentifier un utilisateur en vérifiant le mot de passe.
 exports.createUser = async (req, res) => {
   
     try {
-
-    const email = req.body.email                         //const {email, password} = req.body
+      // Récupère l'email et le mot de passe du corps de la requête.
+    const email = req.body.email                        
     const password = req.body.password
-    const hashedPassword = await hashPassword(password)
-    const user = new User({email: email, password: hashedPassword});   // const user = new User({email, password});
+
+     // Chiffre le mot de passe avant de l'enregistrer dans la base de données.
+    const hashedPassword = await bcrypt.hashPassword(password)
+    const user = new User({email, password: hashedPassword});   // const user = new User({email, password});
     await user.save()
     res.status(201).send({ message : "Utilisateur enregistré"})
     }
@@ -22,10 +27,6 @@ catch(err) {
 }
 }
 
-function hashPassword(password){
-    const saltRounds = 10; 
-    return bcrypt.hash(password, saltRounds)
-} 
 
 exports.logUser = async (req, res) => {
 
@@ -33,14 +34,15 @@ exports.logUser = async (req, res) => {
 
     const email = req.body.email
     const password = req.body.password
-    const user = await User.findOne({email: email})
+    const user = await User.findOne({email})
 
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    const isPasswordValid = await bcrypt.comparePassword(password, user.password)
     if(!isPasswordValid) {
      return res.status(403).send({message: "Mot de passe incorrect"})
     }
-    const token = createToken(email);
-    res.status(200).send({userId: user?._id, token: token})
+    const userId = user._id
+    const token = jwt.createToken({userId});
+    res.status(200).send({userId, token})
 } catch(err) {
 
     console.error(err);
@@ -48,11 +50,4 @@ exports.logUser = async (req, res) => {
  }
 }
 
-function createToken (email){
-    
-   const jwtPassword = process.env.JWT_PASSWORD
-   const token = jwt.sign({email: email}, jwtPassword , {expiresIn : "24h"})
-   return token
-
-}
 

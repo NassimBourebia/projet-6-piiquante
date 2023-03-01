@@ -1,185 +1,125 @@
-// const { log } = require("console");
-const {unlink} = require("fs/promises")
-const {Product} = require("../models")
+// Importation de modules
+const { unlink } = require("fs/promises");
+const Product = require("../models/sauce.model")
+const {deleteImage, updateVote} = require("../utils")
 
-
-exports.getSauces = async (req, res) => { 
-try {
-
- const products = await Product.find({})
- res.send(products)
-
-}
- catch (error) {
-
- res.status(500).send(error)
-
-}
-
- }
-
-function getSauce (req, res) {  
-
-const {id} = req.params
-return Product.findById(id)
- }
+exports.getSauces = (req, res) => { 
+    Product.find()
+    .then(sauces => res.status(200).json(sauces))
+    .catch(error => res.status(500).json(error));
+  };
+  
 
 exports.getSauceById = (req, res) => {
-  
-    getSauce(req, res)
-    .then((product) => sendClientResponse(product,res)) 
-    .catch((err)=> res.status(500).send(err))
- }
-
-exports.deleteSauce = (req, res) => {
-  
-    const {id} = req.params
-    Product.findByIdAndDelete(id)
-    .then((product) => sendClientResponse(product, res))
-    .then((item)=> deleteImage(item))
-    .then((res) => console.log("File deleted", res))
-    .catch((err) => res.status(500).send({message: err}))
-
- }
-
-
-
-exports.modifySauce = (req, res) => { 
-
-    const {
-        params: {id}
-    } = req
-     
-    console.log("req.file", req.file);
-
-    const hasNewImage = req.file != null
-    const payload = makePayload(hasNewImage, req)
-   
-
-    Product.findByIdAndUpdate(id, payload)
-    .then((dbResponse) => sendClientResponse(dbResponse, res))
-    .then((product)=> deleteImage(product))
-    .then((res) => console.log("File deleted", res))
-    .catch((err) => console.error("Probleme updating", err));
-
- }
- function deleteImage (product) { 
-    if (product == null) return //Fait rien 
-    console.log("DELETE IMAGE", product);
-    const imageToDelete = product.imageUrl.split("/").at(-1)
-    return unlink("images/" + imageToDelete)
-    
-
-  }
-
- function makePayload(hasNewImage, req) {
-
- 
-console.log("hasNewImage:", hasNewImage);
-if (!hasNewImage) return req.body
-const payload = JSON.parse(req.body.sauce)
-payload.imageUrl = makeImageUrl(req, req.file.fileName)
-console.log("New image gestion");
-console.log("Voici le payload",payload);
-return payload
-
- }
-
- function sendClientResponse(product, res) {
-    if (product == null) {
-      console.log("NOTHING TO UPDATE")
-      return res.status(404).send({ message: "Object not found in database" })
-    }
-    console.log("ALL GOOD, UPDATING:", product)
-    return Promise.resolve(res.status(200).send(product)).then(() => product)
-  }
-
-
-
-
-    function makeImageUrl (req, fileName) {
-        return req.protocol + "://" + req.get("host") +  "/images/" + fileName
-    }
-
+    Product.findById(req.params.id)
+    .then(sauceFound => {
+      if (!sauceFound) return res.status(404).json({ message: 'sauce not found' });
+      res.status(200).json(sauceFound);
+    })
+    .catch(error => res.status(500).json(error));
+  };
 
 exports.createSauce = (req, res) => {
-  const { body, file } = req
-  const { fileName } = file
-  const sauce = JSON.parse(body.sauce)
-  const { name, manufacturer, description, mainPepper, heat, userId } = sauce
+    const sauceObject = JSON.parse(req.body.sauce);
+  
+    const newSauce = new Product({
+      ...sauceObject,
+      userId: req.auth.userId,
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    });
+  
+    newSauce.save()
+    .then(() => res.status(201).json({ message: "sauce successfully created" }))
+    .catch(error => res.status(500).json(error))
+  };
+  
+  exports.modifySauce = (req, res) => { 
+    Product.findById(req.params.id)
+    .then(sauceFound => {
+      if (!sauceFound) return res.status(404).json({ message: 'sauce not found' });
+      if (sauceFound.userId !== req.auth.userId) return res.status(401).json({ message: "unauthorized request" });
+  
+      const sauceObject = req.file
+      ? { ...JSON.parse(req.body.sauce),
+          imageUrl: `${req.protocol}://${req.get('host')}/images/${ req.file.filename }` } 
+      : { ...req.body };
+  
+      Product.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+      .then(() => {
+        const filename = sauceFound.imageUrl.split('/images/')[1];
+        if (req.file) unlink(`images/${ filename }`);
+  
+        res.status(200).json({ message: "Sauce successfully updated!" });
+      })
+      .catch(error => res.status(400).json(error));
+    })
+    .catch(error => res.status(400).json(error));
+  }
+  exports.deleteSauce = (req, res) => {
+    Product.findById(req.params.id)
+    .then(sauceFound => {
+      if (!sauceFound) return res.status(404).json({ message: 'sauce not found' });
+      if (sauceFound.userId !== req.auth.userId) return res.status(401).json({ message: "unauthorized request" });
+  
+      const filename = sauceFound.imageUrl.split('/images/')[1];
+      unlink(`images/${filename}`);
+  
+      sauceFound.deleteOne()
+      .then(() => res.status(200).json({ message: "Sauce successfully deleted" }))
+      .catch(error => res.status(401).json(error));
+    })
+    .catch(error => res.status(500).json(error))
+  }
 
-  const product = new Product({
-    userId: userId,
-    name: name,
-    manufacturer: manufacturer,
-    description: description,
-    mainPepper: mainPepper,
-    imageUrl: makeImageUrl(req, fileName),
-    heat: heat,
-    likes: 0,
-    dislikes: 0,
-    usersLiked: [],
-    usersDisliked: []
-  })
-  product
-    .save()
-    .then((message) => res.status(201).send({ message }))
-    .catch((err) => res.status(500).send(err))
-}
-
-exports.likeSauce = (req, res) => {
- const {like, userId} = req.body
- if (![1,-1,0].includes(like)) return res.status(403).send({message: "Invalid like value"})
-
-    getSauce(req,res)
-    .then((product) => updateVote(product, like, userId, res))
-    .then((pr) => pr.save())
-    .then((prod) => sendClientResponse(prod, res))
-    .catch((err) => res.status(500).send(err)) 
-
-}
-
-function updateVote(product, like, userId, res) {
-    if (like === 1 || like === -1) return incrementVote(product,userId, like)
-    return resetVote(product, userId, res)
-}
-
-function resetVote (product, userId, res) {
-
-    const { usersLiked, usersDisliked } = product
-     if ([usersLiked, usersDisliked].every((arr) => arr.includes(userId))) 
-     return Promise.reject("User seems to have voted both ways")
-
-     if (![usersLiked, usersDisliked].some((arr) => arr.includes(userId)))
-     return Promise.reject("User seems to not have voted")
-
-
+  exports.likeSauce = (req, res) => {
+    const { like } = req.body
+    const { userId } = req.auth
    
-    if (usersLiked.includes(userId)) {
-        --product.likes
-        product.usersLiked  = product.usersLiked.filter((id) => id !== userId)
-    } else {
-        --product.dislikes
-        product.usersDisliked = product.usersDisliked.filter((id) => id !== userId)
-    }
-
-    return product
+    const status = [ -1, 0, 1 ];
+    if (!status.includes(like)) return res.status(403).json({ error: "Invalid like value" })
     
-}
+    Product.findById(req.params.id)
+    .then(sauceFound => {
+      if (!sauceFound) return res.status(404).json({ error: 'sauce not found' });
+  
+      const { usersLiked, usersDisliked } = sauceFound;
+  
+      switch (like) {
+        case 1:
+          if (usersLiked.includes(userId)) return res.status(400).json({ error });
+          usersLiked.push(userId);
+          break;
+        case -1:
+          if (usersDisliked.includes(userId)) return res.status(400).json({ error });
+          usersDisliked.push(userId);
+          break;
+        case 0:
+          if (usersLiked.includes(userId)) {
+            const index = usersLiked.indexOf(userId);
+            usersLiked.splice(index, 1);
+          } else {
+            const index = usersDisliked.indexOf(userId);
+            usersDisliked.splice(index, 1);
+          }
+          break;
+        default: res.status(400).json({ error });
+      }
+  
+      sauceFound.likes = usersLiked.length;
+      sauceFound.dislikes = usersDisliked.length;
+  
+      sauceFound.save()
+      .then(() => {res.status(200).json({ message: "Sauce updated" })
+    console.log(sauceFound);
+    })
 
-function incrementVote(product, userId, like) {
-    const {usersLiked, usersDisliked} = product
+      .catch(error => res.status(500).json({ error }));
+    })
+    .catch(error => res.status(500).json({ error }))
+  }
+  
 
-    
-    const votersArray = like === 1 ? usersLiked : usersDisliked
-     if (votersArray.includes(userId)) return product
-    votersArray.push(userId)
-     
-    like === 1 ? ++product.likes : ++product.dislikes
-    return product
 
-    }
-    
     
     
 

@@ -13,6 +13,9 @@ const normalizePort = val => {
   }
   return false;
 };
+// Détermine le port sur lequel le serveur doit écouter.
+// Si le port est défini dans les variables d'environnement, il est utilisé.
+// Sinon, le port 3000 est utilisé par défaut.
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
@@ -44,5 +47,5 @@ server.on('listening', () => {
   const bind = typeof address === 'string' ? 'pipe ' + address : 'port ' + port;
   console.log('Listening on ' + bind);
 });
-
+// Écoute sur le port spécifié.
 server.listen(port);

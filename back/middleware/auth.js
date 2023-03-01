@@ -1,20 +1,19 @@
 const jwt = require("jsonwebtoken")
 
 // Middleware pour vérifier l'authentification de l'utilisateur
-function authenticateUser(req, res, next) {
-    console.log("authenticate user");
+exports.authenticateUser = (req, res, next) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    if (!token) return res.status(403).send({ message: "Token Invalid" })
 
-    const header = req.header("Authorization")
-    if (header == null) return res.status(403).send({ message: "Invalid" })
-  
-    const token = header.split(" ")[1]
-    if (token == null) return res.status(403).send({ message: "Token Invalid" })
-  
-    jwt.verify(token, process.env.JWT_PASSWORD, (err, decoded) => {
-      if (err) return res.status(403).send({ message: "Token invalid " + err })
-      console.log("Le token est bien valide");
-      next()
-    })
+    const decodedToken = jwt.verify(token, process.env.JWT_PASSWORD);
+    if (!decodedToken) return res.status(403).send({ message: "Token invalid " });
+
+    const userId = decodedToken.userId;
+    req.auth = { userId };
+
+    next();
+  } catch (error) {
+    res.status(401).json({ error });
   }
-
-module.exports = { authenticateUser}
+}
