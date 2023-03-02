@@ -1,7 +1,8 @@
 // Importation de modules
 const { unlink } = require("fs/promises");
 const Product = require("../models/sauce.model")
-const {deleteImage, updateVote} = require("../utils")
+// const {deleteImage, updateVote} = require("../utils")
+
 
 exports.getSauces = (req, res) => { 
     Product.find()
@@ -9,6 +10,7 @@ exports.getSauces = (req, res) => {
     .catch(error => res.status(500).json(error));
   };
   
+
 
 exports.getSauceById = (req, res) => {
     Product.findById(req.params.id)
@@ -18,6 +20,7 @@ exports.getSauceById = (req, res) => {
     })
     .catch(error => res.status(500).json(error));
   };
+
 
 exports.createSauce = (req, res) => {
     const sauceObject = JSON.parse(req.body.sauce);
@@ -33,6 +36,7 @@ exports.createSauce = (req, res) => {
     .catch(error => res.status(500).json(error))
   };
   
+
   exports.modifySauce = (req, res) => { 
     Product.findById(req.params.id)
     .then(sauceFound => {
@@ -55,6 +59,8 @@ exports.createSauce = (req, res) => {
     })
     .catch(error => res.status(400).json(error));
   }
+
+
   exports.deleteSauce = (req, res) => {
     Product.findById(req.params.id)
     .then(sauceFound => {
@@ -71,6 +77,8 @@ exports.createSauce = (req, res) => {
     .catch(error => res.status(500).json(error))
   }
 
+
+  
   exports.likeSauce = (req, res) => {
     const { like } = req.body
     const { userId } = req.auth
