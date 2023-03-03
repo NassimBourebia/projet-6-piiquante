@@ -27,15 +27,16 @@ catch(err) {
 }
 }
 
-
+// Fonction pour authentifier un utilisateur en vérifiant le mot de passe.
 exports.logUser = async (req, res) => {
 
     try {
-
+    // Récupérer l'email et le mot de passe à partir du corps de la requête.
     const email = req.body.email
     const password = req.body.password
     const user = await User.findOne({email})
-
+    
+   // Vérifier que le mot de passe fourni correspond au mot de passe enregistré pour l'utilisateur.
     const isPasswordValid = await bcrypt.comparePassword(password, user.password)
     if(!isPasswordValid) {
      return res.status(403).send({message: "Mot de passe incorrect"})

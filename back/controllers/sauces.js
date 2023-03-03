@@ -4,6 +4,7 @@ const Product = require("../models/sauce.model")
 // const {deleteImage, updateVote} = require("../utils")
 
 
+// Récupération de toutes les sauces
 exports.getSauces = (req, res) => { 
     Product.find()
     .then(sauces => res.status(200).json(sauces))
@@ -11,7 +12,7 @@ exports.getSauces = (req, res) => {
   };
   
 
-
+// Récupération d'une sauce par ID
 exports.getSauceById = (req, res) => {
     Product.findById(req.params.id)
     .then(sauceFound => {
@@ -21,7 +22,7 @@ exports.getSauceById = (req, res) => {
     .catch(error => res.status(500).json(error));
   };
 
-
+// Création d'une nouvelle sauce
 exports.createSauce = (req, res) => {
     const sauceObject = JSON.parse(req.body.sauce);
   
@@ -36,7 +37,7 @@ exports.createSauce = (req, res) => {
     .catch(error => res.status(500).json(error))
   };
   
-
+ // Modification d'une sauce existante
   exports.modifySauce = (req, res) => { 
     Product.findById(req.params.id)
     .then(sauceFound => {
@@ -60,7 +61,7 @@ exports.createSauce = (req, res) => {
     .catch(error => res.status(400).json(error));
   }
 
-
+// Suppression d'une sauce existante
   exports.deleteSauce = (req, res) => {
     Product.findById(req.params.id)
     .then(sauceFound => {
@@ -78,7 +79,7 @@ exports.createSauce = (req, res) => {
   }
 
 
-  
+// Mise à jour des likes/dislikes d'une sauce
   exports.likeSauce = (req, res) => {
     const { like } = req.body
     const { userId } = req.auth
