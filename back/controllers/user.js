@@ -1,5 +1,5 @@
 //Importe le modèle de l'utilisateur à partir du module ../mongo dans une variable appelée User.
-const User = require("../models/auth.model")
+const User = require("../models/auth")
 const bcrypt = require("../utils/bcrypt")
 const jwt = require("../utils/jwt")
 

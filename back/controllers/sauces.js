@@ -1,6 +1,6 @@
 // Importation de modules
 const { unlink } = require("fs/promises");
-const Product = require("../models/sauce.model")
+const Product = require("../models/sauce")
 // const {deleteImage, updateVote} = require("../utils")
 
 
