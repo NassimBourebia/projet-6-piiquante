@@ -18,9 +18,3 @@ exports.authenticateUser = (req, res, next) => {
   }
 }
 
-// //Le code auth.js définit une fonction middleware qui utilise JSON Web Tokens 
-//   pour vérifier si l'utilisateur est authentifié. Le middleware extrait le token 
-//   d'authentification de l'en-tête Authorization de la requête HTTP, vérifie le token 
-//   en utilisant la méthode verify de la bibliothèque JWT, et ajoute l'identifiant
-//    de l'utilisateur à l'objet de la requête si la vérification est réussie. 
-//    Si le token est manquant ou invalide, le middleware renvoie une réponse d'erreur.
