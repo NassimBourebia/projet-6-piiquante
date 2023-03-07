@@ -7,7 +7,6 @@ const jwt = require("../utils/jwt")
 
 
 
-// Fonction pour authentifier un utilisateur en vérifiant le mot de passe.
 exports.createUser = async (req, res) => {
   
     try {
@@ -15,19 +14,19 @@ exports.createUser = async (req, res) => {
     const email = req.body.email                        
     const password = req.body.password
 
+    const userFound = await User.findOne({ email }); // Permet de récupérer l'utilisateur par son email, s'il existe
+    if (userFound) return response.status(409).json({ error: "User already exists" }); // si l'utilisateur existe en return le message d'erreur
+
      // Chiffre le mot de passe avant de l'enregistrer dans la base de données.
     const hashedPassword = await bcrypt.hashPassword(password)
     const user = new User({email, password: hashedPassword});   // const user = new User({email, password});
     await user.save()
     res.status(201).send({ message : "Utilisateur enregistré"})
+    } catch(err) {
+        res.status(409).send({ message: "User pas enregistré :" + err})
     }
-
-catch(err) {
-    res.status(409).send({ message: "User pas enregistré :" + err})
-}
 }
 
-// Fonction pour authentifier un utilisateur en vérifiant le mot de passe.
 exports.logUser = async (req, res) => {
 
     try {
@@ -35,6 +34,7 @@ exports.logUser = async (req, res) => {
     const email = req.body.email
     const password = req.body.password
     const user = await User.findOne({email})
+    if (!user) return res.status(404).json({ error: "user not found" }); // permet d'envoyer un message d'erreur si l'utilisateur n'est pas trouvé
     
    // Vérifier que le mot de passe fourni correspond au mot de passe enregistré pour l'utilisateur.
     const isPasswordValid = await bcrypt.comparePassword(password, user.password)
@@ -50,5 +50,4 @@ exports.logUser = async (req, res) => {
     res.status(500).send({message: "Erreur interne"})
  }
 }
-
 
